@@ -27,6 +27,16 @@ struct TransitTiming{T<:AbstractFloat} <: TransitOutput{T}
     s_transit::State{T}
 end
 
+struct TransitDuration{T<:AbstractFloat} <: TransitOutput{T}
+    td::Matrix{T}
+    # internal
+    tt::TransitTiming
+end
+function TransitDuration(tmax::T,ic::ElementsIC{T},ti=1) where T<:AbstractFloat
+    ntt = maximum(ceil.(Int64,abs.(tmax./ic.elements[ind,2])).+3)
+    tt = zeros(T,n,ntt)
+
+end
 """
     TransitTiming(tmax, ic; ti)
 
