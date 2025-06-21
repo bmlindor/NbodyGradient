@@ -15,7 +15,7 @@ struct PhotometryModel{T<:Real}
     intr::Integrator{T}
     J::Matrix{T}                    # Jacobian matrix
     jac_inds_elems::Vector{Int64}   # varied parameter indices
-    # H::Matrix{T}                # heirarchy matrix
+    # H::Matrix{T}                
 #     jac_inds_q::Vector{Int64}
 end
 
@@ -32,7 +32,7 @@ end
 
 # For now assume we're doing every parameter. We then wrap in a function that fixes the ones we want.
 function compute_photometry(model::PhotometryModel, θ; tol=1e-6, maxdepth=6)
-# function compute_flux(lcm::LightcurveModel, θ; tol=1e-6, maxdepth=6)
+    # Adopt hierarchy
     H= model.ic.ϵ 
     N = size(H,1)
     t0 = model.t0
@@ -43,7 +43,7 @@ function compute_photometry(model::PhotometryModel, θ; tol=1e-6, maxdepth=6)
     model.lc.u_n .= θ[end-2:end-1]
     model.lc.k .= θ[7*(N-1) + 2:end-3]
 
-    # Now get new initial conditions
+    # Now get new initial conditions from θ
     # Get the elements matrix 
     elements = create_elements_matrix(θ[1:7*(N-1)+1], N)
     ic = ElementsIC(t0, H, elements)
@@ -82,11 +82,11 @@ function grad_compute_photometry(model::PhotometryModel, θ; tol=1e-6, maxdepth=
     lc.k .= θ[7*(N-1)+ 2:end-3]
     dlc.k .= θ[7*(N-1)+ 2:end-3]
 
-    # Now get new initial conditions
+    # Now get new initial conditions from θ
     # Get the elements matrix
     elements = create_elements_matrix(θ[1:7*(N-1)+1], N)
     ic = ElementsIC(t0,H, elements)
-    
+
     # Reset computed transit times
     NbodyGradient.zero_out!(model.tt)
     model.ts.count .= 0
@@ -123,6 +123,7 @@ function build_model_ic(t0,θ,H)
     return ElementsIC(t0,H,elems)
 end
 
+# Initialize model with data and vector of elements θ  
 function PhotometryModel(t0::T,tmax::T,cadence::T,tobs::Vector{T},fobs::Vector{T},ferr::Vector{T},jac_inds_elems::Vector{Int64},H::Matrix{<:Real},θ::Vector{T}) where T <: AbstractFloat
     N=size(H,1)
     @assert length(jac_inds_elems)<=7*N
@@ -144,10 +145,15 @@ function PhotometryModel(t0::T,tmax::T,cadence::T,tobs::Vector{T},fobs::Vector{T
     zeros(length(tobs),length(θ)),jac_inds_elems)
 end
 
+## Let user pass hierarchy vector
 PhotometryModel(t0::T,tmax::T,cadence::T,tobs::Vector{T},fobs::Vector{T},ferr::Vector{T},jac_inds_elems::Vector{Int64},H::Vector{Int64},θ::Vector{T}) where T <: AbstractFloat = PhotometryModel(t0,tmax,cadence,tobs,fobs,ferr,jac_inds_elems,NbodyGradient.hierarchy(H),θ)
 
+## Let user specify only the number of bodies; the hierarchy is filled in as fully-nested; 
 PhotometryModel(t0::T,tmax::T,cadence::T,tobs::Vector{T},fobs::Vector{T},ferr::Vector{T},jac_inds_elems::Vector{Int64},H::Int64,θ::Vector{T}) where T <: AbstractFloat = PhotometryModel(t0,tmax,cadence,tobs,fobs,ferr,jac_inds_elems,[H, ones(Int64,H-1)...],θ)
 
+Base.show(io::IO,::MIME"text/plain",model::PhotometryModel{T}) where {T} = begin
+# println(io,"PhotometryModel{$T}\n Hierarchy: " Elements: "); show(io,"text/plain",model.ic.elements); end;
+)
 # struct TimingModel{T<:Real}
 #     N::Int
 #     t0::T
