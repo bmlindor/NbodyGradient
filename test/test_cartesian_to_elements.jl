@@ -30,9 +30,9 @@ end
     s = State(ic)
 
     # Convert back to elements
-    elems = get_orbital_elements(s,ic)
+    elems = get_orbital_elements_actual(s,ic)
 
     for i in eachindex(system)
-        @test isapprox(elems[1],system[1])
+        @test isapprox(elems[i],system[i])
     end
 end

@@ -40,7 +40,7 @@ Main [`Elements`](@ref) constructor. May use keyword arguments, see [Tutorials](
 function Elements(m::T,P::T,t0::T,ecosω::T,esinω::T,I::T,Ω::T) where T<:Real
     e = sqrt(ecosω^2 + esinω^2)
     ω = atan(esinω,ecosω)
-    Elements(m,P,t0,ecosω,esinω,I,Ω,0.0,e,ω,0.0)
+    Elements(m,P,t0,ecosω,esinω,I,Ω,NaN,e,ω,NaN)
 end
 
 function Base.show(io::IO, ::MIME"text/plain", elems::Elements{T}) where T <: Real
@@ -48,10 +48,7 @@ function Base.show(io::IO, ::MIME"text/plain", elems::Elements{T}) where T <: Re
     vals = [fn => getfield(elems,fn) for fn in fields]
     println(io, "Elements{$T}")
     for pair in vals
-        println(io,first(pair),": ",last(pair))
-    end
-    if elems.a == 0.0
-        println(io, "Orbital semi-major axis: undefined")
+        isnan(last(pair)) ? println(first(pair),": ","undefined") : println(first(pair),": ",last(pair))
     end
     return
 end
